@@ -1,84 +1,118 @@
-# --- Импорты ---
-# Подключаем pandas для удобной работы с данными. Мы даем ему короткое имя 'pd'.
 import pandas as pd
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
-# --- Основной Класс ---
 class TechnicalAnalyzer:
     """
     Этот класс отвечает за вычисление технических индикаторов на основе рыночных данных.
-    Технические индикаторы - это математические расчеты, основанные на исторических ценах,
-    объемах или других данных, которые помогают трейдерам принимать решения.
+    Теперь он умеет считать RSI и MACD.
     """
 
     def calculate_rsi(self, prices: List[float], period: int = 14) -> Optional[float]:
         """
         Вычисляет Индекс Относительной Силы (RSI).
-        RSI - это осциллятор моментума, который измеряет скорость и изменение ценовых движений.
-        Он колеблется от 0 до 100.
-        - Значение выше 70 обычно указывает на перекупленность актива.
-        - Значение ниже 30 обычно указывает на перепроданность актива.
-
-        :param prices: Список цен закрытия (например, за последние 20 дней).
-        :param period: Период для расчета RSI. Стандартное значение - 14.
-        :return: Последнее значение RSI (число с плавающей точкой) или None, если данных недостаточно.
+        (Логика этого метода не изменилась)
         """
-        # Проверяем, достаточно ли у нас данных для расчета. Нам нужно хотя бы на 1 цену больше, чем период.
         if len(prices) < period + 1:
-            print("Ошибка: недостаточно данных для расчета RSI.")
-            return None # Возвращаем None, если данных мало
+            return None
 
-        # Преобразуем наш обычный список Python в объект Pandas Series.
-        # Series - это как один столбец в таблице. С ним гораздо удобнее делать вычисления.
         price_series = pd.Series(prices)
-
-        # 1. Рассчитываем изменение цены между каждым днем.
-        # .diff(1) вычитает из каждой цены предыдущую. Первая цена даст NaN (Not a Number), т.к. нет предыдущей.
         delta = price_series.diff(1)
-
-        # 2. Разделяем изменения на "прирост" (gain) и "убыток" (loss).
-        # .clip(lower=0) заменяет все отрицательные числа на 0. Так мы получаем только приросты.
         gain = delta.clip(lower=0)
-        # Умножаем на -1 и снова clip, чтобы получить положительные значения убытков.
         loss = -delta.clip(upper=0)
-
-        # 3. Считаем средний прирост и средний убыток за указанный период.
-        # .ewm() - это Экспоненциально взвешенное скользящее среднее. Оно придает больший вес
-        # последним данным, что делает индикатор более отзывчивым.
         avg_gain = gain.ewm(com=period - 1, min_periods=period).mean()
         avg_loss = loss.ewm(com=period - 1, min_periods=period).mean()
 
-        # 4. Рассчитываем Относительную Силу (RS).
-        # Если средний убыток равен 0, это может привести к делению на ноль.
-        # В таком случае RSI должен быть 100 (цена только росла).
         if avg_loss.iloc[-1] == 0:
             return 100.0
         
         rs = avg_gain / avg_loss
-
-        # 5. Вычисляем сам RSI по формуле.
         rsi = 100 - (100 / (1 + rs))
-
-        # Возвращаем последнее (самое свежее) значение RSI, округленное до 2 знаков после запятой.
-        # .iloc[-1] означает "взять последний элемент" из нашего ряда данных.
         return round(rsi.iloc[-1], 2)
+
+
+    # --- НОВЫЙ МЕТОД ---
+    def calculate_macd(self, prices: List[float], fast_period: int = 12, slow_period: int = 26, signal_period: int = 9) -> Optional[Dict[str, Any]]:
+        """
+        Вычисляет MACD (Схождение/расхождение скользящих средних) и определяет сигнал пересечения.
+
+        :param prices: Список цен закрытия.
+        :param fast_period: Период для быстрой EMA.
+        :param slow_period: Период для медленной EMA.
+        :param signal_period: Период для сигнальной линии EMA.
+        :return: Словарь с состоянием MACD или None, если данных недостаточно.
+        """
+        if len(prices) < slow_period:
+            return None
+
+        price_series = pd.Series(prices)
+
+        # 1. Рассчитываем быструю и медленную экспоненциальные скользящие средние (EMA)
+        ema_fast = price_series.ewm(span=fast_period, adjust=False).mean()
+        ema_slow = price_series.ewm(span=slow_period, adjust=False).mean()
+
+        # 2. Рассчитываем линию MACD (разница между быстрой и медленной EMA)
+        macd_line = ema_fast - ema_slow
+
+        # 3. Рассчитываем сигнальную линию (EMA от самой линии MACD)
+        signal_line = macd_line.ewm(span=signal_period, adjust=False).mean()
+
+        # --- Логика определения пересечения (самое важное) ---
+        # Мы смотрим на две последние точки во времени: "вчера" (индекс -2) и "сегодня" (индекс -1)
+        
+        # Если "вчера" линия MACD была НИЖЕ сигнальной, а "сегодня" стала ВЫШЕ,
+        # это "бычий" кроссовер (сигнал к покупке).
+        if macd_line.iloc[-2] < signal_line.iloc[-2] and macd_line.iloc[-1] > signal_line.iloc[-1]:
+            crossover = "BULLISH_CROSSOVER"
+        
+        # Если "вчера" линия MACD была ВЫШЕ сигнальной, а "сегодня" стала НИЖЕ,
+        # это "медвежий" кроссовер (сигнал к продаже).
+        elif macd_line.iloc[-2] > signal_line.iloc[-2] and macd_line.iloc[-1] < signal_line.iloc[-1]:
+            crossover = "BEARISH_CROSSOVER"
+            
+        # Если пересечения не было
+        else:
+            crossover = "NO_CROSSOVER"
+
+        # Возвращаем словарь с полной информацией
+        return {
+            'macd_line': round(macd_line.iloc[-1], 2),
+            'signal_line': round(signal_line.iloc[-1], 2),
+            'crossover': crossover
+        }
+        
+        # --- ДОБАВЬТЕ ЭТОТ КОД В КОНЕЦ ФАЙЛА technical_analyzer.py ---
 
 # --- Демонстрация работы класса ---
 if __name__ == '__main__':
     # Создаем экземпляр нашего анализатора
     analyzer = TechnicalAnalyzer()
     
-    # Создаем тестовый набор цен.
-    # Представим, что это цены закрытия акции за 15 дней.
-    sample_prices = [
-        44.34, 44.09, 44.15, 43.61, 44.33, 44.83, 45.10, 45.42, 45.84, 46.08,
-        45.89, 46.03, 45.61, 46.28, 46.28
+    # --- Тест 1: Имитируем "медвежий" сценарий (сильный рост, потом начало падения) ---
+    print("--- Тест 1: Медвежий сценарий ---")
+    bearish_prices = [
+        150, 152, 155, 158, 161, 164, 166, 167, 168, 169, # Сильный рост
+        168.5, 167, 165, 163, 161 # Начало падения
     ]
+    print(f"Цены: {bearish_prices}")
+    
+    # Вызываем наши методы для расчета
+    rsi_value = analyzer.calculate_rsi(bearish_prices, period=14)
+    macd_result = analyzer.calculate_macd(bearish_prices)
+    
+    print(f"Результат RSI: {rsi_value}")
+    print(f"Результат MACD: {macd_result}")
+    
+    # --- Тест 2: Имитируем "бычий" сценарий (сильное падение, потом начало роста) ---
+    print("\n--- Тест 2: Бычий сценарий ---")
+    bullish_prices = [
+        169, 167, 165, 163, 160, 157, 155, 154, 153, 152, # Сильное падение
+        152.5, 154, 156, 158, 160 # Начало роста
+    ]
+    print(f"Цены: {bullish_prices}")
+    
+    # Вызываем наши методы для расчета
+    rsi_value_bull = analyzer.calculate_rsi(bullish_prices, period=14)
+    macd_result_bull = analyzer.calculate_macd(bullish_prices)
 
-    print(f"Тестовые цены (15 дней): {sample_prices}")
-    
-    # Вызываем наш метод для расчета RSI
-    rsi_value = analyzer.calculate_rsi(sample_prices, period=14)
-    
-    if rsi_value is not None:
-        print(f"\nРассчитанный RSI (период 14): {rsi_value}")
+    print(f"Результат RSI: {rsi_value_bull}")
+    print(f"Результат MACD: {macd_result_bull}")

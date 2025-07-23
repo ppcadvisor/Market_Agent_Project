@@ -1,2 +1,4 @@
 2025-07-22 18:34:18,202 - INFO - TRADE EXECUTED: Action=SELL, Symbol=XYZ, Quantity=24, Price=~165.7, StopLoss=173.98, TakeProfit=149.13
 2025-07-22 18:42:57,344 - INFO - TRADE EXECUTED: Action=SELL, Symbol=MSFT, Quantity=7, Price=~510.05999755859375, StopLoss=535.56, TakeProfit=459.05
+2025-07-23 12:59:05,362 - INFO - TRADE EXECUTED: Action=SELL, Symbol=GOOG, Quantity=20, Price=~192.11000061035156, StopLoss=201.72, TakeProfit=172.9
+2025-07-23 12:59:09,904 - INFO - TRADE EXECUTED: Action=SELL, Symbol=SPY, Quantity=6, Price=~628.8599853515625, StopLoss=660.3, TakeProfit=565.97
