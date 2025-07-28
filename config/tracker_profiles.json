@@ -1,0 +1,20 @@
+{
+"aggressive_daytrader": {
+  "description": "Ищем трейдеров с самой высокой доходностью за год.",
+  "ranking_metric": "return1Year",
+  "api_filters": {
+    "limit": 20
+  }
+},
+  "conservative_investor": {
+    "description": "Ищем стабильных инвесторов с длинной историей и низким риском.",
+    "ranking_metric": "sharpe-ratio",
+    "api_filters": {
+      "minTrackRecord": 2,
+      "maxRiskScore": 5,
+      "minWinRatio": 50,
+      "minCopiers": 50,
+      "limit": 10
+    }
+  }
+}
