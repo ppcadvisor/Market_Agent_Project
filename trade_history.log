@@ -3,3 +3,8 @@
 2025-07-23 12:59:05,362 - INFO - TRADE EXECUTED: Action=SELL, Symbol=GOOG, Quantity=20, Price=~192.11000061035156, StopLoss=201.72, TakeProfit=172.9
 2025-07-23 12:59:09,904 - INFO - TRADE EXECUTED: Action=SELL, Symbol=SPY, Quantity=6, Price=~628.8599853515625, StopLoss=660.3, TakeProfit=565.97
 2025-07-23 15:24:28,306 - ERROR - $AAPL: possibly delisted; no price data found  (period=3mo)
+2025-07-31 15:04:32,015 - ERROR - Failed to get ticker 'NVDA' reason: Expecting value: line 1 column 1 (char 0)
+2025-07-31 15:04:40,285 - ERROR - $NVDA: possibly delisted; no price data found  (period=3mo)
+2025-07-31 15:06:12,121 - ERROR - $AAPL: possibly delisted; no price data found  (period=3mo)
+2025-07-31 15:06:16,060 - ERROR - $MSFT: possibly delisted; no price data found  (period=3mo)
+2025-07-31 15:06:18,540 - ERROR - $NVDA: possibly delisted; no price data found  (period=3mo)
